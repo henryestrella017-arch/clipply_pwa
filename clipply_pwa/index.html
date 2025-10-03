@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#7C3AED" />
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>Clipply — PWA</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin:0; padding:0; height:100%; background:#0f0f18; font-family:-apple-system,system-ui,Segoe UI,Roboto,Arial,sans-serif; }
+    /* Topbar & Tabbar */
+    .topbar { position:fixed; inset:0 0 auto 0; height:52px; z-index:50;
+      background:linear-gradient(180deg, rgba(10,10,16,.92), rgba(10,10,16,0));
+      display:flex; align-items:flex-end; justify-content:center; padding-bottom:8px; }
+    .brand { color:#fff; font-weight:800; }
+    .tabbar { position:fixed; inset:auto 0 0 0; height:60px; z-index:60; display:flex; background:#0f0f18; border-top:1px solid #23243a; }
+    .tab { flex:1; display:flex; align-items:center; justify-content:center; color:#9aa0b4; font-weight:800; }
+    .tab.active { color:#fff; }
+    .tab span { font-size:12px; margin-left:6px; }
+    /* Vistas */
+    .view { padding-top:52px; padding-bottom:60px; }
+    /* FEED */
+    .feed { height:calc(100vh - 112px); overflow-y:auto; scroll-snap-type:y mandatory; }
+    .card { position:relative; height:100vh; scroll-snap-align:start; display:flex; align-items:center; justify-content:center; background:#000; }
+    video.main { width:100vw; height:100vh; object-fit:cover; }
+    .rightBar { position:absolute; right:10px; bottom:22px; display:flex; flex-direction:column; align-items:center; gap:12px; z-index:10; }
+    .action { width:54px; height:54px; border-radius:50%; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; color:#fff; font-size:22px; user-select:none; }
+    .count { color:#fff; text-align:center; font-size:12px; margin-top:4px; }
+    .liked { color:#22c55e; }
+    .pill { position:absolute; top:10px; right:10px; z-index:10; background:rgba(0,0,0,.45); color:#fff; padding:6px 10px; border-radius:999px; font-size:12px; }
+    .info { position:absolute; left:12px; bottom:26px; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,.6); }
+    .title { font-weight:800; font-size:18px; }
+    .sub { opacity:.9; margin-top:6px; font-size:14px; }
+    .zoneTop,.zoneBottom{ position:absolute; left:0; width:100%; height:45%; z-index:5; } .zoneTop{top:0}.zoneBottom{bottom:0}
+    /* Corazón doble tap */
+    .heart { position:absolute; left:50%; top:50%; transform: translate(-50%, -50%) scale(0.6);
+      font-size:88px; color:#ff3b6b; opacity:0; pointer-events:none; text-shadow:0 8px 20px rgba(0,0,0,.45);
+      animation: pop .7s ease-out forwards; }
+    @keyframes pop { 0%{opacity:0;transform:translate(-50%,-50%) scale(0.3)} 50%{opacity:1;transform:translate(-50%,-50%) scale(1.05)} 100%{opacity:0;transform:translate(-50%,-50%) scale(1.3)} }
+    /* PERFIL */
+    .profileHeader { padding:12px 14px; display:flex; align-items:center; gap:12px; }
+    .avatar { width:54px; height:54px; border-radius:50%; background:#8B5CF6; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:22px; }
+    .meta .name { color:#fff; font-size:18px; font-weight:800; }
+    .meta .handle { color:#cfd2e1; font-size:13px; margin-top:2px; }
+    .stats { display:flex; gap:16px; padding:0 14px 8px; color:#cfd2e1; font-size:13px; }
+    .filters { display:flex; gap:8px; overflow-x:auto; padding:8px 14px; mask-image: linear-gradient(to right, black 90%, transparent); }
+    .chip { flex:0 0 auto; border:1px solid #2c2d40; color:#fff; background:#111225; padding:8px 12px; border-radius:999px; font-size:12px; font-weight:700; opacity:.9; }
+    .chip.active { background:#7C3AED; border-color:#7C3AED; }
+    .uploadPanel{ padding:10px 14px; }
+    .uploadPanel .row{ display:flex; gap:8px; }
+    .uploadPanel input[type="text"]{ flex:1; background:#0f0f18; color:#fff; border:1px solid #23243a; border-radius:8px; padding:10px; }
+    .uploadPanel input[type="file"]{ width:100%; color:#cfd2e1; }
+    .go{ width:100%; margin-top:8px; background:#22c55e; color:#09240f; border:0; border-radius:8px; padding:10px; font-weight:800; }
+    .grid { padding:8px 8px 80px; display:grid; grid-template-columns: repeat(3, 1fr); gap:4px; }
+    .grid video { width:100%; aspect-ratio:9/16; object-fit:cover; border-radius:6px; }
+    .hidden { display:none !important; }
+  </style>
+</head>
+<body>
+  <div class="topbar"><div class="brand">Clipply</div></div>
+
+  <section id="feedView" class="view">
+    <div class="feed" id="feed">
+      <section class="card" data-id="c1" data-likes="23" data-comments="5" data-author="@calmpower">
+        <video class="main" playsinline muted autoplay loop preload="metadata" webkit-playsinline>
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+        </video>
+        <div class="pill"><button class="muteBtn" style="background:none;border:0;color:#fff;font-weight:700">Unmute</button></div>
+        <div class="info"><div class="title">Reflexión 1 - CalmPower</div><div class="sub author">@calmpower • 1.2K views</div></div>
+        <div class="rightBar"><div class="action like">♥</div><div class="count likeCount"></div><div class="action comments">💬</div><div class="count comCount"></div><div class="action share">↗</div><div class="count">compartir</div></div>
+        <div class="zoneTop"></div><div class="zoneBottom"></div>
+      </section>
+      <section class="card" data-id="c2" data-likes="12" data-comments="3" data-author="@henry">
+        <video class="main" playsinline muted autoplay loop preload="metadata" webkit-playsinline>
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" type="video/mp4" />
+        </video>
+        <div class="pill"><button class="muteBtn" style="background:none;border:0;color:#fff;font-weight:700">Unmute</button></div>
+        <div class="info"><div class="title">Motivación corta</div><div class="sub author">@henry • 830 views</div></div>
+        <div class="rightBar"><div class="action like">♥</div><div class="count likeCount"></div><div class="action comments">💬</div><div class="count comCount"></div><div class="action share">↗</div><div class="count">compartir</div></div>
+        <div class="zoneTop"></div><div class="zoneBottom"></div>
+      </section>
+      <section class="card" data-id="c3" data-likes="44" data-comments="9" data-author="@calmpower">
+        <video class="main" playsinline muted autoplay loop preload="metadata" webkit-playsinline>
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4" type="video/mp4" />
+        </video>
+        <div class="pill"><button class="muteBtn" style="background:none;border:0;color:#fff;font-weight:700">Unmute</button></div>
+        <div class="info"><div class="title">Oración breve</div><div class="sub author">@calmpower • 2.1K views</div></div>
+        <div class="rightBar"><div class="action like">♥</div><div class="count likeCount"></div><div class="action comments">💬</div><div class="count comCount"></div><div class="action share">↗</div><div class="count">compartir</div></div>
+        <div class="zoneTop"></div><div class="zoneBottom"></div>
+      </section>
+    </div>
+  </section>
+
+  <section id="profileView" class="view hidden">
+    <div class="profileHeader"><div class="avatar" id="pfAvatar">H</div><div class="meta"><div class="name" id="pfName">Henry</div><div class="handle" id="pfHandle">@henry</div></div></div>
+    <div class="stats"><div><b>108</b> seguidores</div><div><b>23</b> siguiendo</div><div><b>1.2K</b> likes</div></div>
+    <div class="filters" id="filters"><button class="chip active" data-tag="all">Todos</button><button class="chip" data-tag="#fe">#fe</button><button class="chip" data-tag="#motivación">#motivación</button><button class="chip" data-tag="#oración">#oración</button><button class="chip" data-tag="#paz">#paz</button></div>
+    <div class="uploadPanel"><input type="file" id="fileInput" accept="video/*" /><div class="row"><input type="text" id="titleInput" placeholder="Título del video" /><input type="text" id="tagsInput" placeholder="#hashtags" /></div><button class="go" id="addClip">Subir a mi perfil</button></div>
+    <div class="grid" id="profileGrid"></div>
+  </section>
+
+  <div class="overlay hidden" id="overlay"><div class="sheet"><h3 style="color:#fff;margin:0 0 8px;">Comentarios</h3><div class="comment" style="padding:8px 0; color:#e6e6ee; border-bottom:1px solid #23243a; font-size:14px;">¡Amé este mensaje! 🙌</div><div class="comment" style="padding:8px 0; color:#e6e6ee; border-bottom:1px solid #23243a; font-size:14px;">Qué paz transmite 🔥</div><div class="comment" style="padding:8px 0; color:#e6e6ee; border-bottom:1px solid #23243a; font-size:14px;">Compartiéndolo ahora mismo 💜</div><button class="close" style="margin-top:10px; width:100%; padding:12px; background:#7C3AED; color:#fff; border:0; border-radius:8px; font-weight:700;">Cerrar</button></div></div>
+
+  <nav class="tabbar"><button class="tab active" data-tab="feed">🏠 <span>Feed</span></button><button class="tab" data-tab="profile">👤 <span>Perfil</span></button></nav>
+
+  <script>
+    function parseK(str){ if(str.endsWith("K")) return Math.round(parseFloat(str)*1000); return parseInt(str,10)||0; }
+    function formatK(n){ return n>=1000 ? (Math.round(n/100)/10)+"K" : String(n); }
+    function uid(){ return "u" + Math.random().toString(36).slice(2,10); }
+    function show(el){ el.classList.remove("hidden"); } function hide(el){ el.classList.add("hidden"); }
+
+    const feedView = document.getElementById("feedView"); const profileView = document.getElementById("profileView");
+    document.querySelectorAll(".tab").forEach(btn=>{ btn.addEventListener("click", ()=>{ document.querySelectorAll(".tab").forEach(b=> b.classList.remove("active")); btn.classList.add("active"); const t = btn.dataset.tab; if (t === "feed") { show(feedView); hide(profileView); } else { hide(feedView); show(profileView); } window.scrollTo(0,0); }); });
+
+    const overlay = document.getElementById("overlay"); const feed = document.getElementById("feed");
+    const viewTimers = new WeakMap(); const counted = new WeakSet();
+    const io = new IntersectionObserver((entries)=>{ entries.forEach(e=>{ const v = e.target; if (e.isIntersecting && e.intersectionRatio > 0.7) { v.play().catch(()=>{}); if (!counted.has(v)) { const t = setTimeout(()=>{ counted.add(v); const card = v.closest(".card"); const authorEl = card.querySelector(".author"); const m = authorEl.textContent.match(/(.+)\s•\s([\d\.K]+)\sviews/); if (m) { const current = parseK(m[2]); const next = current+1; authorEl.textContent = m[1]+" • "+formatK(next)+" views"; } }, 1500); viewTimers.set(v, t); } } else { v.pause(); const t=viewTimers.get(v); if(t){clearTimeout(t); viewTimers.delete(v);} } }); }, { threshold:[0,0.7,1] });
+
+    function wireCard(card, idx, cards){
+      const likeBtn = card.querySelector(".like"); const likeCount = card.querySelector(".likeCount"); likeCount.textContent = card.dataset.likes || "0"; card.querySelector(".comCount").textContent = card.dataset.comments || "0";
+      likeBtn.addEventListener("click", ()=>{ const liked = likeBtn.classList.toggle("liked"); const n = parseInt(likeCount.textContent||"0",10)+(liked?1:-1); likeCount.textContent = Math.max(0, n); likeBtn.style.transform="scale(1.2)"; setTimeout(()=>likeBtn.style.transform="scale(1)",120); });
+      card.querySelector(".comments").addEventListener("click", ()=> show(overlay)); document.querySelector(".close").addEventListener("click", ()=> hide(overlay)); overlay.addEventListener("click", (e)=> { if(e.target===overlay) hide(overlay); });
+      card.querySelector(".share").addEventListener("click", async ()=>{ const idx = Array.from(document.querySelectorAll(".card")).indexOf(card)+1; const url = location.href.split("#")[0]+"#v"+idx; if (navigator.share) { try{ await navigator.share({ title:"Clipply Demo", text:"Mira este clip", url }); }catch(e){} } else { prompt("Copia este enlace:", url); } });
+      const video = card.querySelector("video"); card.addEventListener("click",(e)=>{ if (e.target.closest(".rightBar") || e.target.classList.contains("muteBtn")) return; if (video.paused) video.play().catch(()=>{}); else video.pause(); });
+      const muteBtn = card.querySelector(".muteBtn"); muteBtn.addEventListener("click",(e)=>{ e.stopPropagation(); video.muted = !video.muted; muteBtn.textContent = video.muted ? "Unmute" : "Mute"; if (!video.muted) video.play().catch(()=>{}); });
+      card.querySelector(".zoneTop").addEventListener("click", ()=> { const prev=cards[idx-1]; if(prev) prev.scrollIntoView({behavior:"smooth"}); }); card.querySelector(".zoneBottom").addEventListener("click", ()=> { const next=cards[idx+1]; if(next) next.scrollIntoView({behavior:"smooth"}); });
+      let lastTap = 0; card.addEventListener("touchend", (e)=>{ if (e.target.closest(".rightBar") || e.target.classList.contains("muteBtn")) return; const now = Date.now(); if (now - lastTap < 280) { likeBtn.click(); const heart = document.createElement("div"); heart.className = "heart"; heart.textContent = "♥"; card.appendChild(heart); setTimeout(()=> heart.remove(), 700); } lastTap = now; }, {passive:true});
+      io.observe(video);
+    }
+    function wireAllFeed(){ const cards = Array.from(document.querySelectorAll(".card")); cards.forEach((c,i)=> wireCard(c,i,cards)); }
+    wireAllFeed();
+
+    const fileInput = document.getElementById("fileInput"); const titleInput = document.getElementById("titleInput"); const tagsInput = document.getElementById("tagsInput"); const addClip = document.getElementById("addClip"); const profileGrid = document.getElementById("profileGrid");
+    function addToProfileGrid(src, type){ const v = document.createElement("video"); v.src = src; v.muted = true; v.playsInline = true; v.loop = true; v.autoplay = true; v.className = "thumb"; profileGrid.prepend(v); }
+    addClip.addEventListener("click", ()=>{ const f = fileInput.files && fileInput.files[0]; if (!f) { alert("Elige un video primero"); return; } const url = URL.createObjectURL(f); const title = titleInput.value.trim() || "Mi nuevo clip"; const id = uid(); const section = document.createElement("section"); section.className = "card"; section.dataset.id = id; section.dataset.likes = "0"; section.dataset.comments = "0"; section.dataset.author = "@henry"; section.innerHTML = `
+      <video class="main" playsinline muted autoplay loop preload="metadata" webkit-playsinline>
+        <source src="${'${url}'}" type="${'${f.type or "video/mp4"}'}" />
+      </video>
+      <div class="pill"><button class="muteBtn" style="background:none;border:0;color:#fff;font-weight:700">Unmute</button></div>
+      <div class="info"><div class="title">${'${title}'} </div><div class="sub author">@henry • 0 views</div></div>
+      <div class="rightBar"><div class="action like">♥</div><div class="count likeCount"></div><div class="action comments">💬</div><div class="count comCount"></div><div class="action share">↗</div><div class="count">compartir</div></div>
+      <div class="zoneTop"></div><div class="zoneBottom"></div>
+    `; feed.prepend(section); wireAllFeed(); section.scrollIntoView({behavior:"smooth"}); addToProfileGrid(url, f.type); fileInput.value = ""; titleInput.value = ""; tagsInput.value = ""; document.querySelector('.tab[data-tab="feed"]').click(); });
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(console.error); });
+    }
+  </script>
+</body>
+</html>
